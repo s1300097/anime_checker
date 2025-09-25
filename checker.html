@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Amazon Prime チェッカー</title>
+    <style>
+        .url-box {
+            width: 800px;
+            height: 150px;
+        }
+
+        .action-btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>URLリストを入力</h2>
+    <textarea id="urlList" class="url-box" placeholder="1行ごとに作品URLを書いてください"></textarea>
+
+    <br>
+    <button class="action-btn" onclick="runCheck()">実行</button>
+    <h2>結果</h2>
+    <div id="outputBox" class="url-box" readonly></div>
+
+
+    <script>
+
+        let previousResults = {};
+
+        // ページロード時に localStorage から復元
+        window.onload = () => {
+            const savedUrls = localStorage.getItem("urlList");
+            if (savedUrls) {
+                document.getElementById("urlList").value = savedUrls;
+            }
+
+            const stored = localStorage.getItem("previousResults");
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                previousResults = parsed;
+            }
+            console.log("[DEBUG] previousResults 復元済み:", previousResults);
+
+            displayResults({ results: Object.entries(previousResults).map(([title, [epInfo, status, url]]) => ({ title, ep_info: epInfo, status, url })) });
+        };
+
+        function displayResults(data) {
+            console.log("[DEBUG] start");
+            const output = document.getElementById("outputBox");
+            output.innerHTML = "";
+
+            data.results.forEach(item => {
+                const title = item.title;
+                const url = item.url;
+                const epInfo = item.ep_info;
+                const status = item.status;
+
+                const div = document.createElement("div");
+                const a = document.createElement("a");
+                a.href = url;
+                a.target = "_blank";
+                a.textContent = title;
+                div.appendChild(a);
+                div.appendChild(document.createTextNode(` → ep.${epInfo}  ${status}`));
+
+                console.log(`[DEBUG] title:`);
+                const prev = previousResults[title];
+                console.log(`[DEBUG] title: ${title}, prev: ${prev ? JSON.stringify(prev) : 'null'}`);
+                // 前回と違う場合は強調
+                if (!prev || prev[0] != epInfo || prev[1] != status) {
+                    div.style.color = "red";
+                } else {
+                    div.style.color = "black";
+                }
+                previousResults[title] = [epInfo, status, url];
+                output.appendChild(div);
+            });
+
+            localStorage.setItem('previousResults', JSON.stringify(previousResults));
+            console.log(`[DEBUG] Processed`);
+        }
+
+        async function runCheck() {
+            const urls_str = document.getElementById("urlList").value;
+            localStorage.setItem("urlList", urls_str);
+            const urls = urls_str.split("\n").filter(line => line.trim() !== "");
+
+            try {
+                const res = await fetch("http://127.0.0.1:5000/check", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ urls })
+                });
+                const data = await res.json();
+                displayResults(data);
+            } catch (e) {
+                console.error("Fetchエラー:", e);
+                alert(e.message || "不明なエラーが発生しました");
+            }
+        }
+
+    </script>
+</body>
+
+</html>
