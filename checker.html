@@ -59,8 +59,6 @@
             console.log("[DEBUG] start");
             const output = document.getElementById("outputBox");
             output.innerHTML = "";
-            previousResults = localStorage.getItem('previousResults') ? JSON.parse(localStorage.getItem('previousResults')) : {};
-
             data.results.forEach(item => {
                 const title = item.title;
                 const url = item.url;
@@ -75,7 +73,6 @@
                 div.appendChild(a);
                 div.appendChild(document.createTextNode(` → ep.${epInfo}  ${status}`));
 
-                console.log(`[DEBUG] title:`);
                 const prev = previousResults[title];
                 console.log(`[DEBUG] title: ${title}, prev: ${prev ? JSON.stringify(prev) : 'null'}`);
                 // 前回と違う場合は強調
