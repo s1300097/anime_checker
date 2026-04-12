@@ -54,15 +54,16 @@ def check():
 
                 # 判定ルール
                 play_button = latest_ep.locator("a[data-testid='episodes-playbutton']").first
-                watched_div = latest_ep.locator("div.Ypm4jh").first
+                watched_div = latest_ep.locator("div.ymkpgm, div.packshot-hhX9n2").first
 
                 if play_button.count() == 0:
                     status = "配信前"
-                    if episode_cards[-2].locator("div.Ypm4jh").first.get_attribute("data-is-watched") == "false":
+                    prev_watched = episode_cards[-2].locator("div.Ypm4jh")
+                    if prev_watched.count() > 0 and prev_watched.first.get_attribute("data-is-watched", timeout=5000) == "false":
                         status = "未視聴"
                         ep_number -= 1
                 else:
-                    is_watched = watched_div.get_attribute("data-is-watched")
+                    is_watched = watched_div.get_attribute("data-is-watched", timeout=5000)
                     if is_watched == "true":
                         status = "視聴済み"
                     else:
@@ -71,7 +72,7 @@ def check():
                 results.append({
                     "url": url,
                     "title": title,
-                    "ep_info": ep_number,
+                    "ep_info": ep_number+1,
                     "status": status
                 })
 
@@ -88,4 +89,3 @@ def check():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
