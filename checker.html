@@ -59,13 +59,25 @@
             console.log("[DEBUG] start");
             const output = document.getElementById("outputBox");
             output.innerHTML = "";
-            data.results.forEach(item => {
-                const title = item.title;
-                const url = item.url;
-                const epInfo = item.ep_info;
-                const status = item.status;
 
+            if (!data || !Array.isArray(data.results)) {
+                output.textContent = "レスポンス形式が不正です";
+                return;
+            }
+
+            data.results.forEach(item => {
                 const div = document.createElement("div");
+
+                // サーバーがエラー文字列を返した場合
+                if (typeof item === "string") {
+                    div.textContent = item;
+                    div.style.color = "gray";
+                    output.appendChild(div);
+                    return;
+                }
+
+                const { title, url, ep_info: epInfo, status } = item;
+
                 const a = document.createElement("a");
                 a.href = url;
                 a.target = "_blank";
@@ -94,19 +106,37 @@
             localStorage.setItem("urlList", urls_str);
             const urls = urls_str.split("\n").filter(line => line.trim() !== "");
 
+            const btn = document.querySelector(".action-btn");
+            btn.disabled = true;
+            btn.textContent = "チェック中...";
+
+            let data;
             try {
                 const res = await fetch("http://127.0.0.1:5000/check", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ urls })
                 });
-                const data = await res.json();
-                localStorage.setItem("lastResults", JSON.stringify(data));
-                displayResults(data);
+
+                data = await res.json();
+
+                if (!res.ok) {
+                    const errMsg = Array.isArray(data?.results) ? data.results[0] : `HTTPエラー: ${res.status}`;
+                    throw new Error(String(errMsg));
+                }
             } catch (e) {
-                console.error("Fetchエラー:", e);
-                alert(e.message || "不明なエラーが発生しました");
+                console.error("通信エラー:", e);
+                alert("通信エラー: " + (e.message || "不明なエラーが発生しました"));
+                btn.disabled = false;
+                btn.textContent = "実行";
+                return;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "実行";
             }
+
+            localStorage.setItem("lastResults", JSON.stringify(data));
+            displayResults(data);
         }
 
     </script>
