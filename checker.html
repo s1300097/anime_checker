@@ -5,15 +5,14 @@
     <meta charset="UTF-8">
     <title>Amazon Prime アニメチェッカー</title>
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: sans-serif;
             max-width: 800px;
             margin: 40px auto;
             padding: 0 16px;
         }
-        h2 {
-            margin-bottom: 4px;
-        }
+        h2 { margin-bottom: 4px; }
         #updated {
             font-size: 13px;
             color: #888;
@@ -23,18 +22,84 @@
             padding: 4px 0;
             font-size: 15px;
         }
-        a {
-            color: inherit;
-        }
-        .error {
-            color: gray;
-        }
-        .manual-btn {
-            margin-top: 20px;
-            padding: 6px 14px;
+        a { color: inherit; }
+        .error { color: gray; }
+
+        /* --- settings panel --- */
+        #settingsToggle {
+            margin-top: 32px;
+            background: none;
+            border: none;
             font-size: 14px;
+            color: #555;
             cursor: pointer;
+            padding: 0;
         }
+        #settingsToggle:hover { color: #000; }
+        #settingsPanel {
+            display: none;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 8px;
+        }
+        #settingsPanel label {
+            display: block;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 2px;
+            margin-top: 12px;
+        }
+        #settingsPanel label:first-child { margin-top: 0; }
+        #urlTextarea {
+            width: 100%;
+            height: 180px;
+            font-size: 13px;
+            font-family: monospace;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .inline-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .inline-row input {
+            flex: 1;
+            font-size: 13px;
+            padding: 4px 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        button.action {
+            padding: 6px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 4px;
+            border: 1px solid #aaa;
+            background: #f5f5f5;
+        }
+        button.action.primary {
+            background: #0969da;
+            color: #fff;
+            border-color: #0969da;
+        }
+        button.action:hover { opacity: 0.85; }
+        #syncStatus {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #555;
+            min-height: 16px;
+        }
+        #syncStatus.ok { color: #1a7f37; }
+        #syncStatus.err { color: #cf222e; }
     </style>
 </head>
 
@@ -42,39 +107,158 @@
     <h2>Amazon Prime アニメチェッカー</h2>
     <div id="updated">読み込み中...</div>
     <div id="outputBox"></div>
-    <button class="manual-btn" onclick="loadResults()">再読み込み</button>
+    <button class="action" style="margin-top:12px" onclick="loadResults()">再読み込み</button>
+
+    <!-- settings -->
+    <button id="settingsToggle" onclick="toggleSettings()">▶ URL・設定管理</button>
+    <div id="settingsPanel">
+
+        <label>チェック対象 URL（1行1つ、# で始まる行はコメント）</label>
+        <textarea id="urlTextarea" placeholder="https://www.amazon.co.jp/gp/video/detail/XXXXXXXXXX/"></textarea>
+
+        <label>GitHub PAT（Actions に反映する場合のみ必要 / このブラウザにのみ保存）</label>
+        <input type="password" id="patInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+
+        <label>リポジトリ（owner / repo）</label>
+        <div class="inline-row">
+            <input type="text" id="ownerInput" placeholder="your-github-username">
+            <input type="text" id="repoInput" placeholder="prime_anime">
+        </div>
+
+        <div class="btn-row">
+            <button class="action" onclick="saveLocal()">ローカルに保存</button>
+            <button class="action primary" onclick="saveAndSync()">保存 + GitHub に同期</button>
+        </div>
+        <div id="syncStatus"></div>
+    </div>
 
     <script>
-        let previousResults = {};
-
+        /* ---- 初期化 ---- */
         window.onload = () => {
+            restoreSettings();
             const stored = localStorage.getItem("previousResults");
-            if (stored) {
-                previousResults = JSON.parse(stored);
-            }
+            if (stored) previousResults = JSON.parse(stored);
             loadResults();
         };
 
+        let previousResults = {};
+
+        function restoreSettings() {
+            const urls  = localStorage.getItem("urlList")    || "";
+            const pat   = localStorage.getItem("githubPAT")  || "";
+            const owner = localStorage.getItem("githubOwner")|| "";
+            const repo  = localStorage.getItem("githubRepo") || "";
+            document.getElementById("urlTextarea").value = urls;
+            document.getElementById("patInput").value    = pat;
+            document.getElementById("ownerInput").value  = owner;
+            document.getElementById("repoInput").value   = repo;
+        }
+
+        function toggleSettings() {
+            const panel = document.getElementById("settingsPanel");
+            const btn   = document.getElementById("settingsToggle");
+            const open  = panel.style.display === "block";
+            panel.style.display = open ? "none" : "block";
+            btn.textContent = (open ? "▶" : "▼") + " URL・設定管理";
+        }
+
+        /* ---- ローカル保存 ---- */
+        function saveLocal() {
+            persistSettings();
+            setSyncStatus("ローカルに保存しました", "ok");
+        }
+
+        function persistSettings() {
+            localStorage.setItem("urlList",     document.getElementById("urlTextarea").value);
+            localStorage.setItem("githubPAT",   document.getElementById("patInput").value);
+            localStorage.setItem("githubOwner", document.getElementById("ownerInput").value);
+            localStorage.setItem("githubRepo",  document.getElementById("repoInput").value);
+        }
+
+        /* ---- GitHub 同期 ---- */
+        async function saveAndSync() {
+            persistSettings();
+            const pat   = document.getElementById("patInput").value.trim();
+            const owner = document.getElementById("ownerInput").value.trim();
+            const repo  = document.getElementById("repoInput").value.trim();
+
+            if (!pat || !owner || !repo) {
+                setSyncStatus("PAT・owner・repo をすべて入力してください", "err");
+                return;
+            }
+
+            setSyncStatus("同期中...", "");
+            try {
+                await writeFileToGitHub(
+                    owner, repo, "urls.txt",
+                    document.getElementById("urlTextarea").value,
+                    pat
+                );
+                setSyncStatus("GitHub に同期しました（次回 Actions 実行時に反映）", "ok");
+            } catch (e) {
+                setSyncStatus("同期失敗: " + e.message, "err");
+            }
+        }
+
+        async function writeFileToGitHub(owner, repo, path, content, pat) {
+            const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+            const headers = {
+                Authorization: `Bearer ${pat}`,
+                "Content-Type": "application/json",
+                Accept: "application/vnd.github+json"
+            };
+
+            // 既存ファイルの SHA を取得（更新に必要）
+            let sha;
+            const getRes = await fetch(apiBase, { headers });
+            if (getRes.ok) {
+                sha = (await getRes.json()).sha;
+            } else if (getRes.status !== 404) {
+                throw new Error(`GitHub API エラー: ${getRes.status}`);
+            }
+
+            const encoded = btoa(unescape(encodeURIComponent(content)));
+            const body = { message: "Update URLs via web UI", content: encoded };
+            if (sha) body.sha = sha;
+
+            const putRes = await fetch(apiBase, {
+                method: "PUT",
+                headers,
+                body: JSON.stringify(body)
+            });
+            if (!putRes.ok) {
+                const err = await putRes.json().catch(() => ({}));
+                throw new Error(err.message || putRes.status);
+            }
+        }
+
+        function setSyncStatus(msg, type) {
+            const el = document.getElementById("syncStatus");
+            el.textContent = msg;
+            el.className = type;
+        }
+
+        /* ---- 結果表示 ---- */
         async function loadResults() {
             document.getElementById("updated").textContent = "読み込み中...";
             try {
                 const res = await fetch("results.json?t=" + Date.now());
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const data = await res.json();
-                displayResults(data);
+                displayResults(await res.json());
             } catch (e) {
-                document.getElementById("updated").textContent = "results.json が見つかりません（まだ Actions が実行されていない可能性があります）";
-                console.error(e);
+                document.getElementById("updated").textContent =
+                    "results.json が見つかりません（まだ Actions が実行されていない可能性があります）";
             }
         }
 
         function displayResults(data) {
+            document.getElementById("updated").textContent =
+                "最終更新: " + (data.updated_at || "不明");
+
             const output = document.getElementById("outputBox");
             output.innerHTML = "";
 
-            document.getElementById("updated").textContent = "最終更新: " + (data.updated_at || "不明");
-
-            if (!data || !Array.isArray(data.results)) {
+            if (!Array.isArray(data.results)) {
                 output.textContent = "レスポンス形式が不正です";
                 return;
             }
@@ -90,7 +274,6 @@
                 }
 
                 const { title, url, watched, total, status } = item;
-
                 const a = document.createElement("a");
                 a.href = url;
                 a.target = "_blank";
@@ -99,11 +282,9 @@
                 div.appendChild(document.createTextNode(` → ${watched}/${total}話  ${status}`));
 
                 const prev = previousResults[title];
-                if (!prev || prev[0] != watched || prev[1] != total || prev[2] != status) {
-                    div.style.color = "red";
-                } else {
-                    div.style.color = "black";
-                }
+                div.style.color =
+                    (!prev || prev[0] != watched || prev[1] != total || prev[2] != status)
+                    ? "red" : "black";
                 previousResults[title] = [watched, total, status, url];
                 output.appendChild(div);
             });
@@ -112,5 +293,4 @@
         }
     </script>
 </body>
-
 </html>
