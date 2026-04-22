@@ -1,4 +1,103 @@
 {
-  "results": [],
-  "updated_at": "2026-04-23 01:45 JST"
+  "results": [
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0D8GTNTV3/",
+      "title": "Dr.STONE",
+      "watched": 24,
+      "total": 26,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0DZGBJB4F/",
+      "title": "転生したらスライムだった件",
+      "watched": 0,
+      "total": 2,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0GVH8RDVC/",
+      "title": "Re:ゼロから始める異世界生活",
+      "watched": 0,
+      "total": 2,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0GS3GJ79V/",
+      "title": "リィンカーネーションの花弁",
+      "watched": 0,
+      "total": 2,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0GVKXK7SF/",
+      "title": "ようこそ実力至上主義の教室へ",
+      "watched": 0,
+      "total": 6,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0GQJLLZP6/",
+      "title": "NEEDY GIRL OVERDOSE",
+      "watched": 0,
+      "total": 2,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0GVPPSTTK/",
+      "title": "自動販売機に生まれ変わった俺は迷宮を彷徨う",
+      "watched": 0,
+      "total": 3,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0DFL7H2TY/",
+      "title": "お隣の天使様にいつの間にか駄目人間にされていた件2",
+      "watched": 0,
+      "total": 2,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0DWD43RLJ/",
+      "title": "最強の王様、二度目の人生は何をする？",
+      "watched": 0,
+      "total": 14,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0GGHNNZW4/",
+      "title": "灰原くんの強くて青春ニューゲーム",
+      "watched": 0,
+      "total": 2,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0GVYPKM61/",
+      "title": "悲劇の元凶となる最強外道ラスボス女王は民の為に尽くします。",
+      "watched": 0,
+      "total": 2,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0GVKZLC1H/",
+      "title": "クラスで2番目に可愛い女の子と友だちになった",
+      "watched": 0,
+      "total": 2,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0GV9TQL2N",
+      "title": "オタクに優しいギャルはいない!?",
+      "watched": 0,
+      "total": 2,
+      "status": "未視聴"
+    },
+    {
+      "url": "https://www.amazon.co.jp/gp/video/detail/B0GFXKGH95/",
+      "title": "姫様“拷問”の時間です",
+      "watched": 0,
+      "total": 11,
+      "status": "未視聴"
+    }
+  ],
+  "updated_at": "2026-04-23 01:47 JST"
 }
