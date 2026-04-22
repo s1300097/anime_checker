@@ -1,0 +1,19 @@
+# チェックしたい Amazon Prime Video の作品 URL を1行1つで書いてください
+# この行のように # で始まる行はコメントとして無視されます
+#
+# 例:
+# https://www.amazon.co.jp/dp/XXXXXXXXXX
+https://www.amazon.co.jp/gp/video/detail/B0D8GTNTV3/
+https://www.amazon.co.jp/gp/video/detail/B0DZGBJB4F/
+https://www.amazon.co.jp/gp/video/detail/B0GVH8RDVC/
+https://www.amazon.co.jp/gp/video/detail/B0GS3GJ79V/
+https://www.amazon.co.jp/gp/video/detail/B0GVKXK7SF/
+https://www.amazon.co.jp/gp/video/detail/B0GQJLLZP6/
+https://www.amazon.co.jp/gp/video/detail/B0GVPPSTTK/
+https://www.amazon.co.jp/gp/video/detail/B0DFL7H2TY/
+https://www.amazon.co.jp/gp/video/detail/B0DWD43RLJ/
+https://www.amazon.co.jp/gp/video/detail/B0GGHNNZW4/
+https://www.amazon.co.jp/gp/video/detail/B0GVYPKM61/
+https://www.amazon.co.jp/gp/video/detail/B0GVKZLC1H/
+https://www.amazon.co.jp/gp/video/detail/B0GV9TQL2N
+https://www.amazon.co.jp/gp/video/detail/B0GFXKGH95/

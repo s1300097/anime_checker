@@ -3,62 +3,76 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Amazon Prime チェッカー</title>
+    <title>Amazon Prime アニメチェッカー</title>
     <style>
-        .url-box {
-            width: 800px;
-            height: 150px;
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 16px;
         }
-        .action-btn {
-            margin-top: 12px;
-            padding: 8px 16px;
-            font-size: 16px;
+        h2 {
+            margin-bottom: 4px;
+        }
+        #updated {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 16px;
+        }
+        #outputBox div {
+            padding: 4px 0;
+            font-size: 15px;
+        }
+        a {
+            color: inherit;
+        }
+        .error {
+            color: gray;
+        }
+        .manual-btn {
+            margin-top: 20px;
+            padding: 6px 14px;
+            font-size: 14px;
+            cursor: pointer;
         }
     </style>
 </head>
 
 <body>
-    <h2>URLリストを入力</h2>
-    <textarea id="urlList" class="url-box" placeholder="1行ごとに作品URLを書いてください"></textarea>
-
-    <br>
-    <button class="action-btn" onclick="runCheck()">実行</button>
-    <h2>結果</h2>
-    <div id="outputBox" class="url-box" readonly></div>
-
+    <h2>Amazon Prime アニメチェッカー</h2>
+    <div id="updated">読み込み中...</div>
+    <div id="outputBox"></div>
+    <button class="manual-btn" onclick="loadResults()">再読み込み</button>
 
     <script>
-
         let previousResults = {};
 
-        // ページロード時に localStorage から復元
         window.onload = () => {
-            const savedUrls = localStorage.getItem("urlList");
-            if (savedUrls) {
-                document.getElementById("urlList").value = savedUrls;
-            }
-
             const stored = localStorage.getItem("previousResults");
             if (stored) {
                 previousResults = JSON.parse(stored);
             }
-            console.log("[DEBUG] previousResults 復元済み:", previousResults);
-
-            const lastResults = localStorage.getItem("lastResults");
-            console.log("[DEBUG] lastResults raw:", lastResults);
-            if (lastResults) {
-                const parsed = JSON.parse(lastResults);
-                console.log("[DEBUG] lastResults parsed:", parsed);
-                displayResults(parsed);
-            } else {
-                console.log("[DEBUG] lastResults が localStorage にありません");
-            }
+            loadResults();
         };
 
+        async function loadResults() {
+            document.getElementById("updated").textContent = "読み込み中...";
+            try {
+                const res = await fetch("results.json?t=" + Date.now());
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                displayResults(data);
+            } catch (e) {
+                document.getElementById("updated").textContent = "results.json が見つかりません（まだ Actions が実行されていない可能性があります）";
+                console.error(e);
+            }
+        }
+
         function displayResults(data) {
-            console.log("[DEBUG] start");
             const output = document.getElementById("outputBox");
             output.innerHTML = "";
+
+            document.getElementById("updated").textContent = "最終更新: " + (data.updated_at || "不明");
 
             if (!data || !Array.isArray(data.results)) {
                 output.textContent = "レスポンス形式が不正です";
@@ -68,10 +82,9 @@
             data.results.forEach(item => {
                 const div = document.createElement("div");
 
-                // サーバーがエラー文字列を返した場合
-                if (typeof item === "string") {
-                    div.textContent = item;
-                    div.style.color = "gray";
+                if (typeof item === "string" || item.error) {
+                    div.textContent = (item.title || item) + (item.error ? ` → ${item.error}` : "");
+                    div.className = "error";
                     output.appendChild(div);
                     return;
                 }
@@ -86,8 +99,6 @@
                 div.appendChild(document.createTextNode(` → ${watched}/${total}話  ${status}`));
 
                 const prev = previousResults[title];
-                console.log(`[DEBUG] title: ${title}, prev: ${prev ? JSON.stringify(prev) : 'null'}`);
-                // 前回と違う場合は強調
                 if (!prev || prev[0] != watched || prev[1] != total || prev[2] != status) {
                     div.style.color = "red";
                 } else {
@@ -97,48 +108,8 @@
                 output.appendChild(div);
             });
 
-            localStorage.setItem('previousResults', JSON.stringify(previousResults));
-            console.log(`[DEBUG] Processed`);
+            localStorage.setItem("previousResults", JSON.stringify(previousResults));
         }
-
-        async function runCheck() {
-            const urls_str = document.getElementById("urlList").value;
-            localStorage.setItem("urlList", urls_str);
-            const urls = urls_str.split("\n").filter(line => line.trim() !== "");
-
-            const btn = document.querySelector(".action-btn");
-            btn.disabled = true;
-            btn.textContent = "チェック中...";
-
-            let data;
-            try {
-                const res = await fetch("http://127.0.0.1:5000/check", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ urls })
-                });
-
-                data = await res.json();
-
-                if (!res.ok) {
-                    const errMsg = Array.isArray(data?.results) ? data.results[0] : `HTTPエラー: ${res.status}`;
-                    throw new Error(String(errMsg));
-                }
-            } catch (e) {
-                console.error("通信エラー:", e);
-                alert("通信エラー: " + (e.message || "不明なエラーが発生しました"));
-                btn.disabled = false;
-                btn.textContent = "実行";
-                return;
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "実行";
-            }
-
-            localStorage.setItem("lastResults", JSON.stringify(data));
-            displayResults(data);
-        }
-
     </script>
 </body>
 
