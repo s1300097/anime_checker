@@ -128,9 +128,12 @@ def main():
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(storage_state="state.json")
         try:
-            page = context.new_page()
-            for url in urls:
+            for i, url in enumerate(urls):
+                if i > 0:
+                    import time; time.sleep(5)
+                page = context.new_page()
                 result = check_one(page, url)
+                page.close()
                 results.append(result)
                 print(f"完了: {result.get('title', url)}")
         finally:
