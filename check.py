@@ -78,6 +78,11 @@ def check_one(page, url):
     page_offset = max(0, total_available - avail_on_this_page)
 
     # D: 現ページを後ろから走査して最後に視聴済みのエピソードを探す
+    try:
+        page.wait_for_selector("[data-is-watched]", timeout=10000)
+    except Exception:
+        pass  # 未視聴または未ログイン状態
+
     last_watched_index = -1
     for i in range(avail_on_this_page - 1, -1, -1):
         ep_el = episode_locator.nth(i)
