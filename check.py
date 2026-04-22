@@ -69,33 +69,57 @@ def check():
                         results.append(f"{title} → エピソード情報が見つかりません")
                         continue
 
-                    # 最新エピソードを取得（最後の要素）
+                    # --- 判定ルール ---
+
+                    # A: 最新話の配信前判定
                     latest_ep = episode_locator.last
-                    # ep_number は 0-based index。返却時に +1 して実際のエピソード番号にする
-                    ep_number = (total_episodes - 1) if total_episodes is not None else (ep_count - 1)
-
-                    # 判定ルール
                     play_button = latest_ep.locator("a[data-testid='episodes-playbutton']").first
-                    watched_div = latest_ep.locator("div.ymkpgm, div.packshot-hhX9n2").first
+                    pre_airing = (play_button.count() == 0)
 
-                    if play_button.count() == 0:
-                        status = "配信前"
-                        if ep_count >= 2:
-                            prev_watched = episode_locator.nth(ep_count - 2).locator("div.Ypm4jh")
-                            if prev_watched.count() > 0 and prev_watched.first.get_attribute("data-is-watched", timeout=5000) == "false":
-                                status = "未視聴"
-                                ep_number -= 1
+                    # B: 配信前を除いた視聴可能話数
+                    avail_on_this_page = ep_count - (1 if pre_airing else 0)
+
+                    if total_episodes is not None:
+                        total_available = total_episodes - (1 if pre_airing else 0)
                     else:
-                        is_watched = watched_div.get_attribute("data-is-watched", timeout=5000)
-                        if is_watched == "true":
-                            status = "視聴済み"
-                        else:
-                            status = "未視聴"
+                        total_available = avail_on_this_page  # DOM カウンターなしのフォールバック
+
+                    # C: 前ページ分の話数オフセット（ページネーション対応）
+                    page_offset = max(0, total_available - avail_on_this_page)
+
+                    # D: 現ページを後ろから走査して最後に視聴済みのエピソードを探す
+                    last_watched_index = -1
+                    for i in range(avail_on_this_page - 1, -1, -1):
+                        ep_el = episode_locator.nth(i)
+                        watched_el = ep_el.locator("[data-is-watched]").first
+                        if watched_el.count() > 0:
+                            val = watched_el.get_attribute("data-is-watched", timeout=5000)
+                            if val == "true":
+                                last_watched_index = i
+                                break
+
+                    # E: 視聴済み話数を確定
+                    if last_watched_index >= 0:
+                        watched_count = page_offset + last_watched_index + 1
+                    elif page_offset > 0:
+                        # 現ページに視聴済みなし・前ページあり → 前ページは全話視聴と仮定
+                        watched_count = page_offset
+                    else:
+                        watched_count = 0
+
+                    # F: ステータス判定
+                    if pre_airing and watched_count >= total_available:
+                        status = "最新話配信前"
+                    elif watched_count >= total_available:
+                        status = "視聴済み"
+                    else:
+                        status = "未視聴"
 
                     results.append({
                         "url": url,
                         "title": title,
-                        "ep_info": ep_number + 1,
+                        "watched": watched_count,
+                        "total": total_available,
                         "status": status
                     })
 

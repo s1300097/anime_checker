@@ -76,24 +76,24 @@
                     return;
                 }
 
-                const { title, url, ep_info: epInfo, status } = item;
+                const { title, url, watched, total, status } = item;
 
                 const a = document.createElement("a");
                 a.href = url;
                 a.target = "_blank";
                 a.textContent = title;
                 div.appendChild(a);
-                div.appendChild(document.createTextNode(` → ep.${epInfo}  ${status}`));
+                div.appendChild(document.createTextNode(` → ${watched}/${total}話  ${status}`));
 
                 const prev = previousResults[title];
                 console.log(`[DEBUG] title: ${title}, prev: ${prev ? JSON.stringify(prev) : 'null'}`);
                 // 前回と違う場合は強調
-                if (!prev || prev[0] != epInfo || prev[1] != status) {
+                if (!prev || prev[0] != watched || prev[1] != total || prev[2] != status) {
                     div.style.color = "red";
                 } else {
                     div.style.color = "black";
                 }
-                previousResults[title] = [epInfo, status, url];
+                previousResults[title] = [watched, total, status, url];
                 output.appendChild(div);
             });
 
