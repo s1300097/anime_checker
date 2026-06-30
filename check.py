@@ -41,9 +41,9 @@ def check():
                         continue
 
                     # ページネーション対応: 24話超の場合、最終ページへ移動
-                    pagination = page.locator("div.sortDropList-Iq9XTB")
+                    pagination = page.locator("div._3R4jka")
                     if pagination.count() > 0:
-                        page_items = page.locator("div.sortDropList-Iq9XTB ul li a._1NNx6V")
+                        page_items = page.locator("div._3R4jka ul li a._1NNx6V")
                         last_item = page_items.last
                         last_classes = last_item.get_attribute("class") or ""
                         if "_326rd1" not in last_classes:
@@ -53,7 +53,7 @@ def check():
                             page.wait_for_selector("div[data-testid='episode-packshot']", timeout=15000)
 
                     # 総エピソード数をカウンターdivから取得
-                    total_ep_locator = page.locator("div.episodeCount-AH4m9k")
+                    total_ep_locator = page.locator("div.Lvobdt")
                     total_episodes = None
                     if total_ep_locator.count() > 0:
                         count_text = total_ep_locator.first.inner_text()  # e.g. "26 エピソード"
