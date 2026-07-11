@@ -28,8 +28,19 @@ def check():
                     page.goto(url, wait_until="domcontentloaded")
 
                     try:
-                        page.wait_for_selector("h1[data-automation-id='title']", timeout=10000)
-                        title = page.locator("h1[data-automation-id='title']").inner_text()
+                        # 通常のタイトル
+                        if page.locator("h1[data-automation-id='title']").count() > 0:
+                            page.wait_for_selector("h1[data-automation-id='title']", timeout=10000)
+                            title = page.locator("h1[data-automation-id='title']").inner_text()
+
+                        # image を含むタイトル(title-art)パターン
+                        elif page.locator("h1[data-testid='title-art']").count() > 0:
+                            page.wait_for_selector("h1[data-testid='title-art'] img", timeout=10000)
+                            title = page.locator("h1[data-testid='title-art'] img").first.get_attribute("alt")
+
+                        else:
+                            title = url
+
                     except Exception:
                         title = url
 
